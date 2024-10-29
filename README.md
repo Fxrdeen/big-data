@@ -8,7 +8,7 @@
         kafka-topics.sh --create --topic emoji-aggregates --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
 
 
-2.Go API for Emoji Submission(File Name: emoji_api.go)
+2. Go API for Emoji Submission(File Name: emoji_api.go)
   i]Initialize Go module:  go mod init emoji_api
   ii]Install dependencies: go get github.com/Shopify/sarama
   iii]Run the Go server:   go run emoji_api.go
