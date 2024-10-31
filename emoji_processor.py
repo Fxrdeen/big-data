@@ -1,25 +1,25 @@
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, window
+from flask import Flask, request
+from kafka import KafkaProducer
+import json
 
-spark = SparkSession.builder.appName("EmojiProcessor").getOrCreate()
-emoji_stream = spark.readStream.format("kafka") \
-    .option("kafka.bootstrap.servers", "localhost:9092") \
-    .option("subscribe", "emoji-stream") \
-    .load()
+app = Flask(__name__)
 
-aggregates = emoji_stream \
-    .selectExpr("CAST(value AS STRING) as emoji") \
-    .groupBy("emoji", window("timestamp", "2 seconds")) \
-    .count()
+# Initialize Kafka Producer
+producer = KafkaProducer(bootstrap_servers='localhost:9092',
+                         value_serializer=lambda v: json.dumps(v).encode('utf-8'))
 
-query = aggregates \
-    .selectExpr("to_json(struct(*)) AS value") \
-    .writeStream \
-    .format("kafka") \
-    .option("kafka.bootstrap.servers", "localhost:9092") \
-    .option("topic", "emoji-aggregates") \
-    .outputMode("update") \
-    .start()
+@app.route('/send_emoji', methods=['GET'])
+def send_emoji():
+    emoji = request.args.get('emoji')
+    print(f"Sending emoji: {emoji}")  # Log the emoji being sent
+    if emoji:  # Check if emoji is not None
+        producer.send('emoji-stream', value=emoji)
+        producer.flush()  # Ensure all messages are sent before returning
+        print(f"Emoji {emoji} sent to Kafka successfully")  # Log successful send
+        return "Emoji received", 200
+    else:
+        print("No emoji provided")  # Log if no emoji is provided
+        return "Emoji not specified", 400
 
-query.awaitTermination()
-
+if __name__ == '__main__':
+    app.run(port=8081)
