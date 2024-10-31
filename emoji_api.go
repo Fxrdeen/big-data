@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama" 
 	"time"
 )
 
@@ -46,4 +46,3 @@ func main() {
 	http.HandleFunc("/send_emoji", emojiHandler)
 	http.ListenAndServe(":8080", nil)
 }
-
